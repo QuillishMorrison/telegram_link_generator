@@ -6,6 +6,11 @@
     <title>Генератор Telegram ссылок</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+      $(document).ready(function(){
+          console.log('%cRCV.Gen-2.7', 'color: wheat; font-weight: bold; font-size: 16px;');
+      });
+    </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; background-color: #f3f4f6; }
         #app { max-width: 500px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
@@ -70,6 +75,30 @@
                     const qrCodeElement = document.getElementById("qrcode");
                     qrCodeElement.innerHTML = "";
                     new QRCode(qrCodeElement, { text: this.link, width: 150, height: 150 });
+                },
+                copyLink() {
+                    this.copyToClipboard(this.link);
+                },
+                copyQRCode() {
+                    const qrCanvas = document.querySelector("#qrcode canvas");
+                    qrCanvas.toBlob(blob => {
+                        const item = new ClipboardItem({ "image/png": blob });
+                        navigator.clipboard.write([item]);
+                        this.showTooltip();
+                    });
+                },
+                copyToClipboard(text) {
+                    const tempInput = document.createElement("textarea");
+                    tempInput.value = text;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(tempInput);
+                    this.showTooltip();
+                },
+                showTooltip() {
+                    this.tooltipVisible = true;
+                    setTimeout(() => { this.tooltipVisible = false; }, 1500);
                 }
             }
         }).mount("#app");
