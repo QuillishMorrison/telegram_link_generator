@@ -45,7 +45,7 @@
 <body>
     <div id="app">
         <h2>Генератор ссылок для Telegram</h2>
-        <input type="text" v-model="username" placeholder="Введите username">
+        <input type="text" v-model="username" placeholder="Введите username" value="domoderator">
         <input type="text" v-model="message" placeholder="Введите сообщение">
         <button class="button-33" @click="generateLink" style="pointer-events: auto;">Создать ссылку</button>
         <p v-if="link" class="copy-btn" @click="copyLink">Скопировать ссылку</p>
@@ -57,7 +57,7 @@
         const { createApp } = Vue;
         createApp({
             data() {
-                return { username: '', message: '', link: '', tooltipVisible: false };
+                return { username: 'domoderator', message: '', link: '', tooltipVisible: false };
             },
             methods: {
                 generateLink() {
@@ -70,30 +70,6 @@
                     const qrCodeElement = document.getElementById("qrcode");
                     qrCodeElement.innerHTML = "";
                     new QRCode(qrCodeElement, { text: this.link, width: 150, height: 150 });
-                },
-                copyLink() {
-                    this.copyToClipboard(this.link);
-                },
-                copyQRCode() {
-                    const qrCanvas = document.querySelector("#qrcode canvas");
-                    qrCanvas.toBlob(blob => {
-                        const item = new ClipboardItem({ "image/png": blob });
-                        navigator.clipboard.write([item]);
-                        this.showTooltip();
-                    });
-                },
-                copyToClipboard(text) {
-                    const tempInput = document.createElement("textarea");
-                    tempInput.value = text;
-                    document.body.appendChild(tempInput);
-                    tempInput.select();
-                    document.execCommand("copy");
-                    document.body.removeChild(tempInput);
-                    this.showTooltip();
-                },
-                showTooltip() {
-                    this.tooltipVisible = true;
-                    setTimeout(() => { this.tooltipVisible = false; }, 1500);
                 }
             }
         }).mount("#app");
