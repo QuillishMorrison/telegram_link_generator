@@ -7,26 +7,39 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-        input, button { margin: 10px; padding: 10px; font-size: 16px; }
-        #qrcode { margin-top: 20px; }
+        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; background-color: #f3f4f6; }
+        #app { max-width: 500px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
+        h2 { color: #333; margin-bottom: 20px; }
+        input { width: calc(100% - 24px); margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; padding: 10px; background-color: #4CAF50; color: #fff; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #45a049; }
+        #qrcode { margin: 20px auto; cursor: pointer; width: 150px; height: 150px; }
+        .copy-btn { margin-top: 10px; cursor: pointer; color: #4CAF50; text-decoration: underline; }
+        .copy-btn:hover { color: #388E3C; }
+        .tooltip { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #333; color: #fff; padding: 5px 10px; border-radius: 5px; opacity: 0; transition: opacity 0.3s; }
+        .tooltip.show { opacity: 1; }
+        @media (max-width: 600px) {
+            #app { padding: 15px; }
+            input, button { font-size: 14px; }
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <h2>Генератор ссылок для Telegram</h2>
-        <input type="text" v-model="username" placeholder="Введите username или ID">
+        <input type="text" v-model="username" placeholder="Введите username">
         <input type="text" v-model="message" placeholder="Введите сообщение">
         <button @click="generateLink">Создать ссылку</button>
-        <p v-if="link"><a :href="link" target="_blank">{{ link }}</a></p>
-        <div id="qrcode"></div>
+        <p v-if="link" class="copy-btn" @click="copyLink">Скопировать ссылку</p>
+        <div id="qrcode" @click="copyQRCode"></div>
+        <div class="tooltip" :class="{'show': tooltipVisible}">Скопировано!</div>
     </div>
     
     <script>
         const { createApp } = Vue;
         createApp({
             data() {
-                return { username: '', message: '', link: '' };
+                return { username: '', message: '', link: '', tooltipVisible: false };
             },
             methods: {
                 generateLink() {
@@ -36,8 +49,33 @@
                     this.generateQRCode();
                 },
                 generateQRCode() {
-                    document.getElementById("qrcode").innerHTML = "";
-                    new QRCode(document.getElementById("qrcode"), this.link);
+                    const qrCodeElement = document.getElementById("qrcode");
+                    qrCodeElement.innerHTML = "";
+                    new QRCode(qrCodeElement, { text: this.link, width: 150, height: 150 });
+                },
+                copyLink() {
+                    this.copyToClipboard(this.link);
+                },
+                copyQRCode() {
+                    const qrCanvas = document.querySelector("#qrcode canvas");
+                    qrCanvas.toBlob(blob => {
+                        const item = new ClipboardItem({ "image/png": blob });
+                        navigator.clipboard.write([item]);
+                        this.showTooltip();
+                    });
+                },
+                copyToClipboard(text) {
+                    const tempInput = document.createElement("textarea");
+                    tempInput.value = text;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(tempInput);
+                    this.showTooltip();
+                },
+                showTooltip() {
+                    this.tooltipVisible = true;
+                    setTimeout(() => { this.tooltipVisible = false; }, 1500);
                 }
             }
         }).mount("#app");
