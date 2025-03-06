@@ -11,8 +11,26 @@
         #app { max-width: 500px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
         h2 { color: #333; margin-bottom: 20px; }
         input { width: calc(100% - 24px); margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button { width: 100%; padding: 10px; background-color: #4CAF50; color: #fff; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
-        button:hover { background-color: #45a049; }
+        .button-33 {
+          background-color: #c2fbd7;
+          border-radius: 100px;
+          box-shadow: rgba(44, 187, 99, .2) 0 -25px 18px -14px inset,rgba(44, 187, 99, .15) 0 1px 2px,rgba(44, 187, 99, .15) 0 2px 4px,rgba(44, 187, 99, .15) 0 4px 8px,rgba(44, 187, 99, .15) 0 8px 16px,rgba(44, 187, 99, .15) 0 16px 32px;
+          color: green;
+          cursor: pointer;
+          display: inline-block;
+          padding: 10px 20px;
+          text-align: center;
+          transition: all 250ms;
+          border: 0;
+          font-size: 16px;
+          user-select: none;
+          -webkit-user-select: none;
+          touch-action: manipulation;
+        }
+        .button-33:hover {
+          box-shadow: rgba(44,187,99,.35) 0 -25px 18px -14px inset,rgba(44,187,99,.25) 0 1px 2px,rgba(44,187,99,.25) 0 2px 4px,rgba(44,187,99,.25) 0 4px 8px,rgba(44,187,99,.25) 0 8px 16px,rgba(44,187,99,.25) 0 16px 32px;
+          transform: scale(1.05) rotate(-1deg);
+        }
         #qrcode { margin: 20px auto; cursor: pointer; width: 150px; height: 150px; }
         .copy-btn { margin-top: 10px; cursor: pointer; color: #4CAF50; text-decoration: underline; }
         .copy-btn:hover { color: #388E3C; }
@@ -20,7 +38,7 @@
         .tooltip.show { opacity: 1; }
         @media (max-width: 600px) {
             #app { padding: 15px; }
-            input, button { font-size: 14px; }
+            input, .button-33 { font-size: 14px; }
         }
     </style>
 </head>
@@ -29,7 +47,7 @@
         <h2>Генератор ссылок для Telegram</h2>
         <input type="text" v-model="username" placeholder="Введите username">
         <input type="text" v-model="message" placeholder="Введите сообщение">
-        <button @click="generateLink">Создать ссылку</button>
+        <button class="button-33" @click="generateLink" style="pointer-events: auto;">Создать ссылку</button>
         <p v-if="link" class="copy-btn" @click="copyLink">Скопировать ссылку</p>
         <div id="qrcode" @click="copyQRCode"></div>
         <div class="tooltip" :class="{'show': tooltipVisible}">Скопировано!</div>
