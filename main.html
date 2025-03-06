@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Telegram ссылок</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        input, button { margin: 10px; padding: 10px; font-size: 16px; }
+        #qrcode { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>Генератор ссылок для Telegram</h2>
+        <input type="text" v-model="username" placeholder="Введите username или ID">
+        <input type="text" v-model="message" placeholder="Введите сообщение">
+        <button @click="generateLink">Создать ссылку</button>
+        <p v-if="link"><a :href="link" target="_blank">{{ link }}</a></p>
+        <div id="qrcode"></div>
+    </div>
+    
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return { username: '', message: '', link: '' };
+            },
+            methods: {
+                generateLink() {
+                    if (!this.username) return alert("Введите username или ID!");
+                    let textParam = this.message ? `?text=${encodeURIComponent(this.message)}` : '';
+                    this.link = `https://t.me/${this.username}${textParam}`;
+                    this.generateQRCode();
+                },
+                generateQRCode() {
+                    document.getElementById("qrcode").innerHTML = "";
+                    new QRCode(document.getElementById("qrcode"), this.link);
+                }
+            }
+        }).mount("#app");
+    </script>
+</body>
+</html>
