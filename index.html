@@ -2,15 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <title>Генератор Telegram ссылок</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script>
-      $(document).ready(function(){
-          console.log('%cRCV.Gen-2.7', 'color: wheat; font-weight: bold; font-size: 16px;');
-      });
-    </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; background-color: #f3f4f6; }
         #app { max-width: 500px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
@@ -45,6 +40,38 @@
             #app { padding: 15px; }
             input, .button-33 { font-size: 14px; }
         }
+        .preview-wrapper { margin-top: 20px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        .preview-header { background-color: #0088cc; color: #fff; padding: 5px; text-align: center; }
+        .preview-chat {
+       display: flex;
+       flex-direction: column;
+       align-items: flex-end;
+       padding: 10px;
+       background: url('https://i.pinimg.com/originals/cb/66/41/cb66419d2fe63b3f1e65b4c9eca4465e.jpg') no-repeat center center;
+       background-size: cover;
+   }
+        .message { max-width: 70%; padding: 5px 10px; border-radius: 10px; margin: 5px 0; }
+        .incoming {
+          background-color: #fff;
+          max-width: 70%;
+          word-break: break-word;
+          display: inline-block;
+          align-self: flex-start;
+        }
+        .outgoing {
+          background-color: #effdde;
+          max-width: 70%;
+          word-break: break-word;
+          display: inline-block;
+          float: right;
+          text-align: right;
+        }
+    .message-username {
+          font-size: 12px;
+          color: #fff;
+          margin-bottom: 2px;
+          align-self: flex-start;
+        }
     </style>
 </head>
 <body>
@@ -56,7 +83,17 @@
         <p v-if="link" class="copy-btn" @click="copyLink">Скопировать ссылку</p>
         <div id="qrcode" @click="copyQRCode"></div>
         <div class="tooltip" :class="{'show': tooltipVisible}">Скопировано!</div>
+        <div class="preview-wrapper">
+          <div class="preview-header">Telegram</div>
+          <div class="preview-chat">
+              <div class="message-username">{{ username }}</div>
+              <div class="message incoming">Здравствуйте!</div>
+              <div class="message incoming">Чем могу помочь?</div>
+              <div class="message outgoing">{{ message || '...' }}</div>
+          </div>
+      </div>
     </div>
+
     
     <script>
         const { createApp } = Vue;
