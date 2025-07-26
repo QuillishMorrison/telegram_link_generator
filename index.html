@@ -6,6 +6,7 @@
     <title>Генератор Telegram ссылок</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; background-color: #f3f4f6; }
         #app { max-width: 500px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
@@ -36,20 +37,28 @@
         .copy-btn:hover { color: #388E3C; }
         .tooltip { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #333; color: #fff; padding: 5px 10px; border-radius: 5px; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .tooltip.show { opacity: 1; pointer-events: auto; }
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 1000; max-width: 400px; width: 100%; }
+        .modal-content { text-align: center; }
+        .modal-content p { word-break: break-all; margin: 10px 0; }
+        .modal-content button { margin: 10px; padding: 8px 16px; background-color: #4CAF50; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+        .modal-content button:hover { background-color: #388E3C; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 999; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+        .overlay.visible { opacity: 1; pointer-events: auto; }
         @media (max-width: 600px) {
             #app { padding: 15px; }
             input, .button-33 { font-size: 14px; }
+            .modal { max-width: 90%; }
         }
         .preview-wrapper { margin-top: 20px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
         .preview-header { background-color: #0088cc; color: #fff; padding: 5px; text-align: center; }
         .preview-chat {
-       display: flex;
-       flex-direction: column;
-       align-items: flex-end;
-       padding: 10px;
-       background: url('https://i.pinimg.com/originals/cb/66/41/cb66419d2fe63b3f1e65b4c9eca4465e.jpg') no-repeat center center;
-       background-size: cover;
-   }
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          padding: 10px;
+          background: url('https://i.pinimg.com/originals/cb/66/41/cb66419d2fe63b3f1e65b4c9eca4465e.jpg') no-repeat center center;
+          background-size: cover;
+        }
         .message { max-width: 70%; padding: 5px 10px; border-radius: 10px; margin: 5px 0; }
         .incoming {
           background-color: #fff;
@@ -66,7 +75,7 @@
           float: right;
           text-align: right;
         }
-    .message-username {
+        .message-username {
           font-size: 12px;
           color: #fff;
           margin-bottom: 2px;
@@ -81,7 +90,7 @@
         <input type="text" v-model="message" placeholder="Введите сообщение">
         <button class="button-33" @click="generateLink" style="pointer-events: auto;">Создать ссылку</button>
         <p v-if="link" class="copy-btn" @click="copyLink">Скопировать ссылку</p>
-<!--         <div id="qrcode" @click="copyQRCode"></div> -->
+        <!-- <div id="qrcode" @click="copyQRCode"></div> -->
         <div class="tooltip" :class="{'show': tooltipVisible}">Скопировано!</div>
         <div class="preview-wrapper">
           <div class="preview-header">Telegram</div>
@@ -91,15 +100,34 @@
               <div class="message incoming">Чем могу помочь?</div>
               <div class="message outgoing">{{ message || '...' }}</div>
           </div>
-      </div>
+        </div>
+        <div v-if="modalVisible" class="modal">
+            <div class="modal-content">
+                <h3>Ссылка из QR-кода</h3>
+                <p>{{ qrLink }}</p>
+                <button @click="copyQRLink">Скопировать</button>
+                <button @click="closeModal">Закрыть</button>
+            </div>
+        </div>
+        <div class="overlay" :class="{'visible': overlayVisible}">
+            Отпустите файл в любом месте
+        </div>
     </div>
 
-    
     <script>
         const { createApp } = Vue;
         createApp({
             data() {
-                return { username: 'domoderator', message: '', link: '', tooltipVisible: false };
+                return {
+                    username: 'domoderator',
+                    message: '',
+                    link: '',
+                    tooltipVisible: false,
+                    modalVisible: false,
+                    qrLink: '',
+                    overlayVisible: false,
+                    dragTimeout: null
+                };
             },
             methods: {
                 generateLink() {
@@ -133,10 +161,85 @@
                     document.body.removeChild(tempInput);
                     this.showTooltip();
                 },
+                copyQRLink() {
+                    this.copyToClipboard(this.qrLink);
+                },
                 showTooltip() {
                     this.tooltipVisible = true;
                     setTimeout(() => { this.tooltipVisible = false; }, 1500);
+                },
+                closeModal() {
+                    this.modalVisible = false;
+                    this.qrLink = '';
+                },
+                async processImage(image) {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    ctx.drawImage(image, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    if (code) {
+                        this.qrLink = code.data;
+                        this.modalVisible = true;
+                    } else {
+                        alert('Не удалось распознать QR-код');
+                    }
+                },
+                handlePaste(event) {
+                    const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+                    for (const item of items) {
+                        if (item.type.indexOf('image') !== -1) {
+                            const blob = item.getAsFile();
+                            const img = new Image();
+                            img.onload = () => this.processImage(img);
+                            img.src = URL.createObjectURL(blob);
+                        }
+                    }
+                },
+                handleDragOver(event) {
+                    event.preventDefault();
+                    if (!this.overlayVisible) {
+                        this.overlayVisible = true;
+                    }
+                    if (this.dragTimeout) {
+                        clearTimeout(this.dragTimeout);
+                    }
+                },
+                handleDragLeave() {
+                    if (this.dragTimeout) {
+                        clearTimeout(this.dragTimeout);
+                    }
+                    this.dragTimeout = setTimeout(() => {
+                        this.overlayVisible = false;
+                    }, 100); // Задержка для предотвращения мерцания
+                },
+                handleDrop(event) {
+                    event.preventDefault();
+                    if (this.dragTimeout) {
+                        clearTimeout(this.dragTimeout);
+                    }
+                    this.overlayVisible = false;
+                    const file = event.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const img = new Image();
+                        img.onload = () => this.processImage(img);
+                        img.src = URL.createObjectURL(file);
+                    }
                 }
+            },
+            mounted() {
+                document.addEventListener('paste', this.handlePaste);
+                document.addEventListener('dragover', this.handleDragOver);
+                document.addEventListener('dragleave', this.handleDragLeave);
+                document.addEventListener('drop', this.handleDrop);
+            },
+            beforeUnmount() {
+                document.removeEventListener('paste', this.handlePaste);
+                document.removeEventListener('dragover', this.handleDragOver);
+                document.removeEventListener('dragleave', this.handleDragLeave);
+                document.removeEventListener('drop', this.handleDrop);
             }
         }).mount("#app");
     </script>
